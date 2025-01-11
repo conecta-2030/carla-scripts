@@ -900,7 +900,7 @@ def game_loop(args):
             pygame.HWSURFACE | pygame.DOUBLEBUF)
 
         hud = HUD(args.width, args.height)
-        world = World(client.get_world(), hud, args.filter, args.weather)
+        world = World(client.get_world(), hud, args.filter,)
         controller = DualControl(world, args.autopilot)
 
         clock = pygame.time.Clock()
