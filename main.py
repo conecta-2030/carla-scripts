@@ -25,7 +25,7 @@ import carla
 from world import World
 from controls import DualControl
 from hud import HUD
-from pedestrian_manager import PedestrianManager
+from controllers.pedestrian_manager import PedestrianManager
 
 
 def game_loop(args):
@@ -35,35 +35,39 @@ def game_loop(args):
 
     try:
         client = carla.Client(args.host, args.port)
-        client.set_timeout(2.0)
+        client.set_timeout(10.0)
 
         display = pygame.display.set_mode(
             (args.width, args.height),
-            pygame.HWSURFACE | pygame.DOUBLEBUF)
+            pygame.HWSURFACE | pygame.DOUBLEBUF
+        )
 
         hud = HUD(args.width, args.height)
         world = World(client.get_world(), hud, args.filter, args.weather)
-        controller = DualControl(world, args.autopilot)
 
-        # Initialize pedestrian manager
-        ped_manager = PedestrianManager(world.world)
-        ped_manager.spawn_pedestrians(num_pedestrians=10)
+        # Initialize PedestrianManager
+        #pedestrian_manager = PedestrianManager(client, world.world)
+        #pedestrian_manager.spawn_pedestrians(args.pedestrians)
+
+        controller = DualControl(world, args.autopilot)
 
         clock = pygame.time.Clock()
         while True:
             clock.tick_busy_loop(30)
             if controller.parse_events(world, clock):
                 return
+
             world.tick(clock)
             world.render(display)
-            ped_manager.update_pedestrians()  # Update pedestrians
             pygame.display.flip()
 
     finally:
         if world is not None:
             world.destroy()
-        if ped_manager:
-            ped_manager.cleanup()
+
+        if 'pedestrian_manager' in locals():
+            pedestrian_manager.cleanup()
+
         pygame.quit()
 
 def main():
@@ -75,6 +79,13 @@ def main():
     argparser.add_argument('--res', default='5760x1080', help='window resolution (default: 1930x1080)')
     argparser.add_argument('--filter', default='vehicle.*', help='actor filter (default: "vehicle.*")')
     argparser.add_argument('--weather', type=str, default=None, help='JSON string with weather parameters')
+    argparser.add_argument(
+    '--pedestrians',
+    metavar='N',
+    default=10,
+    type=int,
+    help='Number of pedestrians to spawn (default: 10)'
+)
     args = argparser.parse_args()
 
     args.width, args.height = map(int, args.res.split('x'))
