@@ -25,6 +25,8 @@ import carla
 from world import World
 from controls import DualControl
 from hud import HUD
+from pedestrian_manager import PedestrianManager
+
 
 def game_loop(args):
     pygame.init()
@@ -43,6 +45,10 @@ def game_loop(args):
         world = World(client.get_world(), hud, args.filter, args.weather)
         controller = DualControl(world, args.autopilot)
 
+        # Initialize pedestrian manager
+        ped_manager = PedestrianManager(world.world)
+        ped_manager.spawn_pedestrians(num_pedestrians=10)
+
         clock = pygame.time.Clock()
         while True:
             clock.tick_busy_loop(30)
@@ -50,11 +56,14 @@ def game_loop(args):
                 return
             world.tick(clock)
             world.render(display)
+            ped_manager.update_pedestrians()  # Update pedestrians
             pygame.display.flip()
 
     finally:
         if world is not None:
             world.destroy()
+        if ped_manager:
+            ped_manager.cleanup()
         pygame.quit()
 
 def main():
